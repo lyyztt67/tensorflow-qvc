@@ -1,0 +1,152 @@
+---
+title: "TensorFlow 快猛糙"
+author: "Heyang Gong"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+---
+
+```{r setup,eval=TRUE, echo=FALSE, warning=FALSE,message=FALSE}
+knitr::opts_chunk$set(
+  eval = FALSE,
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+```
+
+This project aims to help me to use TensorFlow as soon as possible!
+
+文章思考和组织过程：
+
+```
+1. Installation of TensorFlow on Ubuntu! see <github.com/rstudio/tensorflow> R中的安装如此简单愉快！ 
+2. tensorflow.rstudio.com is the first article I should carefully read.
+
+
+```
+
+
+
+# 快猛糙 
+
+常见问题：
+
+1. tensor 是什么？解决了什么问题？ 
+
+他是一个API， 输入一些东西，然后它输出一些东西. It aim to help us building models.
+
+2. What is its core thought of create such a API?
+
+
+```{r}
+library(tensorflow)
+sess = tf$Session()
+hello <- tf$constant("hello, TensorFlow")
+sess$run(hello)
+```
+
+```{r}
+file.edit("scripts/simple-things.py")
+file.edit("scripts/simple-things.ipynb")
+
+
+```
+
+
+
+## tensorflow.rstudio.com
+
+Tensorflow is an software library. Keras API provides a high-level interface for neural network, while estimator API is about regressors and classifiers. This website has three introduction 栏目 of Keras, Estimators and Core!
+
+
+### Estimators
+
+```{r, eval = F, echo = T}
+devtools::install_github("rstudio/tfestimators")
+```
+
+Let's have a quick start!
+
+```{r}
+library(tfestimators)
+# return an input_fn for a given subset of data
+mtcars_input_fn <- function(data) {
+  input_fn(data, 
+           features = c("disp", "cyl"), 
+           response = "mpg")
+}
+
+cols <- feature_columns( 
+  column_numeric("disp", "cyl")
+)
+
+model <- linear_regressor(feature_columns = cols)
+
+indices <- sample(1:nrow(mtcars), size = 0.80 * nrow(mtcars))
+train <- mtcars[indices, ]
+test  <- mtcars[-indices, ]
+
+# train the model
+model %>% train(mtcars_input_fn(train))
+
+obs <- mtcars[1:3, ]
+model %>% predict(mtcars_input_fn(obs))
+```
+
+
+
+### Keras 
+
+Let's have a quick start!
+
+```{r}
+library(keras)
+mnist <- dataset_mnist()
+x_train <- mnist$train$x
+y_train <- mnist$train$y
+x_test <- mnist$test$x
+y_test <- mnist$test$y
+
+# reshape
+dim(x_train) <- c(nrow(x_train), 784)
+dim(x_test) <- c(nrow(x_test), 784)
+# rescale
+x_train <- x_train / 255
+x_test <- x_test / 255
+
+y_train <- to_categorical(y_train, 10)
+y_test <- to_categorical(y_test, 10)
+
+model <- keras_model_sequential() 
+model %>% 
+  layer_dense(units = 256, activation = 'relu', input_shape = c(784)) %>% 
+  layer_dropout(rate = 0.4) %>% 
+  layer_dense(units = 128, activation = 'relu') %>%
+  layer_dropout(rate = 0.3) %>%
+  layer_dense(units = 10, activation = 'softmax')
+
+summary(model)
+
+model %>% compile(
+  loss = 'categorical_crossentropy',
+  optimizer = optimizer_rmsprop(),
+  metrics = c('accuracy')
+)
+
+history <- model %>% fit(
+  x_train, y_train, 
+  epochs = 30, batch_size = 128, 
+  validation_split = 0.2
+)
+
+plot(history)
+
+model %>% evaluate(x_test, y_test)
+
+model %>% predict_classes(x_test)
+```
+
+

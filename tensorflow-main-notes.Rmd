@@ -19,6 +19,23 @@ knitr::opts_chunk$set(
 
 This project aims to help me to use TensorFlow as soon as possible!
 
+
+TensorFlow is an open source software library for numerical computation using data flow graphs. 它是开源库，用于数值计算，用数据流图这个工具来实现。那么有几个问题：
+
+- 数值计算是指什么？什么是计算？为什么说各种模型就是计算？参考计算概论课程。
+- Data flow graphs 是个什么鬼？它是计算过程的一种模拟。用图这个抽象的工具来模拟了计算过程。
+
+在Data flow graphs 这个计算框架内：
+
+- The Keras API for TensorFlow provides a high-level interface for neural networks, with a focus on enabling fast experimentation. 专攻神经网路
+
+- The Estimator API for TensorFlow provides high-level implementations of common model types such as regressors and classifiers. 专攻各种统计模型
+
+- The Core TensorFlow API is a lower-level interface that provides full access to the TensorFlow computational graph. 专攻底层实现
+
+他们都是数据流图框架内的算法，应对不同数值计算任务开发出来的计算模块。TensorFlow™ 是一个使用数据流图进行数值计算的开源软件库。图中的节点代表数学运算， 而图中的边则代表在这些节点之间传递的多维数组（张量）。
+
+
 文章思考和组织过程：
 
 ```
@@ -71,24 +88,28 @@ devtools::install_github("rstudio/tfestimators")
 Let's have a quick start!
 
 ```{r}
+## 准备数据
 library(tfestimators)
+indices <- sample(1:nrow(mtcars), size = 0.80 * nrow(mtcars))
+train <- mtcars[indices, ]
+test  <- mtcars[-indices, ]
+
+## 模型构建
 # return an input_fn for a given subset of data
 mtcars_input_fn <- function(data) {
   input_fn(data, 
            features = c("disp", "cyl"), 
            response = "mpg")
 }
-
 cols <- feature_columns( 
   column_numeric("disp", "cyl")
 )
-
 model <- linear_regressor(feature_columns = cols)
 
-indices <- sample(1:nrow(mtcars), size = 0.80 * nrow(mtcars))
-train <- mtcars[indices, ]
-test  <- mtcars[-indices, ]
 
+
+
+## 运行模型
 # train the model
 model %>% train(mtcars_input_fn(train))
 
@@ -100,11 +121,18 @@ model %>% predict(mtcars_input_fn(obs))
 
 ### Keras 
 
+
+- 这里用到 tensorflow 了吗？
+
 Let's have a quick start!
+
+数据准备和查看
 
 ```{r}
 library(keras)
-mnist <- dataset_mnist()
+# mnist <- dataset_mnist()
+# save(mnist,file = "~/test/data/mnist.Rdata")
+load("~/test/data/mnist.Rdata")
 x_train <- mnist$train$x
 y_train <- mnist$train$y
 x_test <- mnist$test$x
@@ -119,7 +147,12 @@ x_test <- x_test / 255
 
 y_train <- to_categorical(y_train, 10)
 y_test <- to_categorical(y_test, 10)
+```
 
+
+模型构建
+
+```{r}
 model <- keras_model_sequential() 
 model %>% 
   layer_dense(units = 256, activation = 'relu', input_shape = c(784)) %>% 
@@ -127,7 +160,6 @@ model %>%
   layer_dense(units = 128, activation = 'relu') %>%
   layer_dropout(rate = 0.3) %>%
   layer_dense(units = 10, activation = 'softmax')
-
 summary(model)
 
 model %>% compile(
@@ -135,6 +167,14 @@ model %>% compile(
   optimizer = optimizer_rmsprop(),
   metrics = c('accuracy')
 )
+summary(model)
+
+```
+
+
+模型执行和计算
+
+```{r}
 
 history <- model %>% fit(
   x_train, y_train, 
@@ -149,4 +189,53 @@ model %>% evaluate(x_test, y_test)
 model %>% predict_classes(x_test)
 ```
 
+
+
+
+### core TensorFlow API
+
+The core TensorFlow API is composed of a set of Python modules that enable constructing and executing TensorFlow graphs. The tensorflow package provides access to the complete TensorFlow API from within R.
+
+
+```{r}
+library(tensorflow)
+
+## 准备数据
+# Create 100 phony x, y data points, y = x * 0.1 + 0.3
+x_data <- runif(100, min=0, max=1)
+y_data <- x_data * 0.1 + 0.3
+
+
+## 构建图模型
+# Try to find values for W and b that compute y_data = W * x_data + b
+# (We know that W should be 0.1 and b 0.3, but TensorFlow will
+# figure that out for us.)
+W <- tf$Variable(tf$random_uniform(shape(1L), -1.0, 1.0))
+b <- tf$Variable(tf$zeros(shape(1L)))
+y <- W * x_data + b
+
+# Minimize the mean squared errors.
+loss <- tf$reduce_mean((y - y_data) ^ 2)
+optimizer <- tf$train$GradientDescentOptimizer(0.5)
+train <- optimizer$minimize(loss)
+
+## 执行和运算模型
+# Launch the graph and initialize the variables.
+sess = tf$Session()
+sess$run(tf$global_variables_initializer())
+
+# Fit the line (Learns best fit is W: 0.1, b: 0.3)
+for (step in 1:201) {
+  sess$run(train)
+  if (step %% 20 == 0)
+    cat(step, "-", sess$run(W), sess$run(b), "\n")
+}
+```
+
+我用 python 写一个和这个类似的文件。
+
+```{r}
+dir.create("notebooks")
+file.create("notebooks/tensorflow-r2python.ipynb")
+```
 

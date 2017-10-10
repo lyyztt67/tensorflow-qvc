@@ -1,0 +1,51 @@
+---
+title: "TensorFlow HKUST"
+author: "Heyang Gong"
+date: "`r Sys.Date()`"
+output: 
+  html_document: 
+    number_sections: yes
+    toc: yes
+---
+
+本文件用于理解 3 days for tensorflow by HKUST.
+
+
+```{r setup,eval=TRUE, echo=FALSE, warning=FALSE,message=FALSE}
+knitr::opts_chunk$set(
+  eval = FALSE,
+	echo = TRUE,
+	message = FALSE,
+	warning = FALSE
+)
+gongfunc::set_py()
+```
+
+Everything is a tensorflow!
+
+```{python}
+np.loadtxt("a.csv", delimiter = ", ", dtype = np.float32)
+
+```
+
+
+## Day 1: Introduction
+
+
+
+
+
+
+## Questions
+
+1. How to interpret that the cost of softmax is cross entropy? 
+
+2. NN(Neural Net) for MNIST, what is that?
+
+3. 做一个最简单的优化问题 with tensorflow.
+
+```{r}
+dir()
+file.edit("scripts/simple-optim.py")
+```
+

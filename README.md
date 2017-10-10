@@ -1,9 +1,17 @@
 
-本项目的目的在于快速搞定tensorflow.
+本项目的目的在于快速搞定tensorflow. 
+
+```
+1. 用它来做 神经网路 模型的训练，所以我们需要关于 神经网络
+2. I want to learn tensorflow, so learn it with traditional ML algorithms. 传统算法的 tensorflow 化.
+3. 刚开始的时候关注快猛糙，后来关注系统化的学习 tensorflow。
+
+```
+
 
 ## Project Introduction
 
-something
+我需要用深度学习技术获得一个图片识别竞赛的名次，使用 tensorflow 这个框架是一个非常好的选择。
 
 
 
